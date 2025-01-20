@@ -2,14 +2,9 @@
 
 namespace App\Exceptions;
 
-use Exception;
+use App\Exceptions\BaseException;
 
-class ResourceNotFoundException extends Exception
+class ResourceNotFoundException extends BaseException
 {
-    public function render($request)
-    {
-        return response()->json([
-            'error' => $this->message
-        ], 404);
-    }
+    protected $statusCode = 404;
 }

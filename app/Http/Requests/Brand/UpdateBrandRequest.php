@@ -4,12 +4,13 @@ namespace App\Http\Requests\Brand;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Models\Brand;
 
 class UpdateBrandRequest extends FormRequest
 {
     public function authorize()
     {
-        return true; // Add authorization logic if needed
+        return true;
     }
 
     public function rules()
@@ -19,24 +20,28 @@ class UpdateBrandRequest extends FormRequest
                 'sometimes',
                 'string',
                 'max:255',
-                Rule::unique('brands')->ignore($this->brand)
+                Rule::unique('brands')->ignore($this->route('id'))
             ],
-            'status' => 'sometimes|in:active,inactive',
+            'status' => 'sometimes|in:active,inactive'
         ];
     }
 
-    public function messages()
+    protected function prepareForValidation()
     {
-        return [
-            'name.unique' => 'This brand name already exists',
-            'status.boolean' => 'Status must be active or inactive'
-        ];
+        if (!Brand::find($this->route('id'))) {
+            throw new \Illuminate\Validation\ValidationException(
+                validator([], []),
+                response()->json([
+                    'error' => 'Brand with that id does not exist'
+                ], 404)
+            );
+        }
     }
 
     protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
     {
         throw new \Illuminate\Validation\ValidationException($validator, response()->json([
-            'message' => $validator->errors()->first(),
-        ], 422));
+            'error' => $validator->errors()->first()
+        ], 422));  // Changed to 422 for validation errors
     }
 }

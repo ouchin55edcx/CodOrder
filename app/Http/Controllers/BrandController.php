@@ -16,7 +16,6 @@ class BrandController extends Controller
 
     public function store(StoreBrandRequest $request)
     {
-        Log::info("***store brand***");
         $brand = Brand::create($request->validated());
         return response()->json($brand, 201);
     }
@@ -26,8 +25,9 @@ class BrandController extends Controller
         return response()->json($brand);
     }
 
-    public function update(UpdateBrandRequest $request, Brand $brand)
+    public function update(UpdateBrandRequest $request, $id)
     {
+        $brand = Brand::findOrFail($id);
         $brand->update($request->validated());
         return response()->json($brand);
     }

@@ -14,4 +14,8 @@ class Client extends Model
         'commune',
         'adresse',
     ];
+
+    public static function findOrFail($id)
+    {
+    }
 }

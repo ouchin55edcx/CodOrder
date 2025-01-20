@@ -12,7 +12,7 @@ return new class extends Migration
     public function up()
     {
         Schema::create('brands', function (Blueprint $table) {
-            $table->uuid('id')->primary();
+            $table->id();
             $table->string('name');
             $table->enum('status', ['active', 'inactive'])->default('inactive');
             $table->timestamps();

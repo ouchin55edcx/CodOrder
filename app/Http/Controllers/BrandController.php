@@ -1,8 +1,11 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Brand;
-use Illuminate\Http\Request;
+use App\Http\Requests\Brand\StoreBrandRequest;
+use App\Http\Requests\Brand\UpdateBrandRequest;
+use Illuminate\Support\Facades\Log;
 
 class BrandController extends Controller
 {
@@ -11,40 +14,27 @@ class BrandController extends Controller
         return Brand::all();
     }
 
-    public function store(Request $request)
+    public function store(StoreBrandRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'status' => 'required|in:active,inactive',
-        ]);
-
-        return Brand::create($request->all());
+        Log::info("***store brand***");
+        $brand = Brand::create($request->validated());
+        return response()->json($brand, 201);
     }
 
-    public function show($id)
+    public function show(Brand $brand)
     {
-        return Brand::findOrFail($id);
+        return response()->json($brand);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateBrandRequest $request, Brand $brand)
     {
-        $brand = Brand::findOrFail($id);
-
-        $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'status' => 'sometimes|in:active,inactive',
-        ]);
-
-        $brand->update($request->all());
-
-        return $brand;
+        $brand->update($request->validated());
+        return response()->json($brand);
     }
 
-    public function destroy($id)
+    public function destroy(Brand $brand)
     {
-        $brand = Brand::findOrFail($id);
         $brand->delete();
-
-        return response()->noContent();
+        return response()->json(null, 204);
     }
 }

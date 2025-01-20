@@ -44,11 +44,11 @@ class ClientController extends Controller
         $request->validate([
             'file' => 'required|mimes:xlsx,xls',
         ]);
-    
+
         try {
             $import = new ClientsImport();
             Excel::import($import, $request->file('file'));
-    
+
             return response()->json([
                 'success' => true,
                 'message' => 'Clients imported successfully'
@@ -56,7 +56,7 @@ class ClientController extends Controller
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
             $failures = $e->failures();
             $errors = [];
-            
+
             foreach ($failures as $failure) {
                 $errors[] = [
                     'row' => $failure->row(),
@@ -65,7 +65,7 @@ class ClientController extends Controller
                     'values' => $failure->values()
                 ];
             }
-    
+
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',

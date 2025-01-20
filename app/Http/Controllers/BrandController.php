@@ -20,8 +20,9 @@ class BrandController extends Controller
         return response()->json($brand, 201);
     }
 
-    public function show(Brand $brand)
+    public function show($id)
     {
+        $brand = Brand::findOrFail($id);
         return response()->json($brand);
     }
 
@@ -32,8 +33,9 @@ class BrandController extends Controller
         return response()->json($brand);
     }
 
-    public function destroy(Brand $brand)
+    public function destroy($id)
     {
+        $brand = Brand::findOrFail($id);
         $brand->delete();
         return response()->json(null, 204);
     }

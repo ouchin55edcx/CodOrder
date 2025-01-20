@@ -6,9 +6,22 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\BrandController;
 
+//
+Route::get('/user', function (Request $request) {
+    return $request->user();
+})->middleware('auth:sanctum');
 
-Route::apiResource('clients', ClientController::class);
+
+// clients management
 Route::post('clients/import', [ClientController::class, 'import']);
+
+Route::prefix('clients')->group(function () {
+    Route::get('', [ClientController::class, 'index']);
+    Route::post('', [ClientController::class, 'store']);
+    Route::get('/{id}', [ClientController::class, 'show']);
+    Route::put('/{id}', [ClientController::class, 'update']);
+    Route::delete('/{id}', [ClientController::class, 'destroy']);
+});
 
 // suppliers management
 Route::prefix('suppliers')->group(function () {
@@ -27,7 +40,3 @@ Route::prefix('brands')->name('brands.')->group(function () {
     Route::put('/{id}', [BrandController::class, 'update'])->name('update');
     Route::delete('/{id}', [BrandController::class, 'destroy'])->name('destroy');
 });
-
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');

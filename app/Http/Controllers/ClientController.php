@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
-
+use App\Http\Responses\Client\ClientResponse;
 use App\Models\Client;
+use App\Http\Requests\Client\StoreClientRequest;
+use App\Http\Requests\Client\UpdateClientRequest;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ClientsImport;
@@ -12,30 +14,32 @@ class ClientController extends Controller
 {
     public function index()
     {
-        return Client::all();
+        return ClientResponse::collection(Client::paginate(10));
     }
 
-    public function store(Request $request)
+    public function store(StoreClientRequest $request)
     {
-        $client = Client::create($request->all());
-        return response()->json($client, 201);
+        $client = Client::create($request->validated());
+        return new ClientResponse($client);
     }
 
     public function show($id)
     {
-        return Client::findOrFail($id);
+        $client = Client::findOrFail($id);
+        return new ClientResponse($client);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateClientRequest $request, $id)
     {
         $client = Client::findOrFail($id);
-        $client->update($request->all());
-        return response()->json($client, 200);
+        $client->update($request->validated());
+        return new ClientResponse($client);
     }
 
     public function destroy($id)
     {
-        Client::destroy($id);
+        $client = Client::findOrFail($id);
+        $client->delete();
         return response()->json(null, 204);
     }
 
@@ -50,30 +54,13 @@ class ClientController extends Controller
             Excel::import($import, $request->file('file'));
 
             return response()->json([
-                'success' => true,
-                'message' => 'Clients imported successfully'
-            ], 200);
-        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
-            $failures = $e->failures();
-            $errors = [];
-
-            foreach ($failures as $failure) {
-                $errors[] = [
-                    'row' => $failure->row(),
-                    'attribute' => $failure->attribute(),
-                    'errors' => $failure->errors(),
-                    'values' => $failure->values()
-                ];
-            }
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $errors
-            ], 422);
+                'message' => 'Import completed successfully',
+                'total_imported' => $import->getRowCount(),
+                'total_errors' => count($import->errors()),
+                'errors' => $import->errors()
+            ]);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
                 'message' => 'Import failed',
                 'error' => $e->getMessage()
             ], 500);

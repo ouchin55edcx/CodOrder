@@ -2,46 +2,40 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Responses\Supplier\SupplierResponse;
 use App\Models\Supplier;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use App\Http\Requests\Supplier\StoreSupplierRequest;
+use App\Http\Requests\Supplier\UpdateSupplierRequest;
 
 class SupplierController extends Controller
 {
     public function index()
     {
-        return response()->json(Supplier::all());
+        return SupplierResponse::collection(Supplier::paginate(10));
     }
 
-    public function store(Request $request)
+    public function store(StoreSupplierRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'status' => ['required', Rule::in(['active', 'inactive', 'pending'])],
-        ]);
-
-        $supplier = Supplier::create($validated);
-        return response()->json($supplier, 201);
+        $supplier = Supplier::create($request->validated());
+        return new SupplierResponse($supplier);
     }
 
-    public function show(Supplier $supplier)
+    public function show($id)
     {
-        return response()->json($supplier);
+        $supplier = Supplier::findOrFail($id);
+        return new SupplierResponse($supplier);
     }
 
-    public function update(Request $request, Supplier $supplier)
+    public function update(UpdateSupplierRequest $request, $id)
     {
-        $validated = $request->validate([
-            'name' => 'string|max:255',
-            'status' => [Rule::in(['active', 'inactive', 'pending'])],
-        ]);
-
-        $supplier->update($validated);
-        return response()->json($supplier);
+        $supplier = Supplier::findOrFail($id);
+        $supplier->update($request->validated());
+        return new SupplierResponse($supplier);
     }
 
-    public function destroy(Supplier $supplier)
+    public function destroy($id)
     {
+        $supplier = Supplier::findOrFail($id);
         $supplier->delete();
         return response()->json(null, 204);
     }

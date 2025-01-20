@@ -2,13 +2,13 @@
 
 namespace App\Http\Requests\Brand;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\BaseFormRequest;
 
-class StoreBrandRequest extends FormRequest
+class StoreBrandRequest extends BaseFormRequest
 {
     public function authorize()
     {
-        return true; // Add authorization logic if needed
+        return true;
     }
 
     public function rules()
@@ -25,14 +25,7 @@ class StoreBrandRequest extends FormRequest
             'name.required' => 'Brand name is required',
             'name.unique' => 'This brand name already exists',
             'status.required' => 'Brand status is required',
-            'status.boolean' => 'Status must be active or inactive'
+            'status.in' => 'Status must be either active or inactive'
         ];
-    }
-
-    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
-    {
-        throw new \Illuminate\Validation\ValidationException($validator, response()->json([
-            'message' => $validator->errors()->first(),
-        ], 422));
     }
 }

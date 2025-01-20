@@ -11,7 +11,8 @@ abstract class BaseException extends Exception
     public function render($request)
     {
         return response()->json([
-            'error' => $this->message
+            'message' => $this->message,
+            'status' => $this->statusCode
         ], $this->statusCode);
     }
 }

@@ -11,7 +11,7 @@ class UpdateBrandRequest extends BaseFormRequest
 {
     public function authorize()
     {
-        return Brand::where('id', $this->route('id'))->exists();
+        return true;
     }
 
     public function rules()
@@ -35,8 +35,12 @@ class UpdateBrandRequest extends BaseFormRequest
         ];
     }
 
-    protected function failedAuthorization()
+    protected function prepareForValidation()
     {
-        throw new ResourceNotFoundException('Brand with that id does not exist');
+        $brand = Brand::find($this->route('id'));
+        
+        if (!$brand) {
+            throw new ResourceNotFoundException('Brand with that id does not exist');
+        }
     }
 }

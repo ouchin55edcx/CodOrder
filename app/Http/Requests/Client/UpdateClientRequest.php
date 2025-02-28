@@ -6,7 +6,6 @@ use App\Http\Requests\BaseFormRequest;
 use App\Models\Client;
 use Illuminate\Validation\Rule;
 use App\Exceptions\ResourceNotFoundException;
-
 class UpdateClientRequest extends BaseFormRequest
 {
     public function authorize()
@@ -30,9 +29,9 @@ class UpdateClientRequest extends BaseFormRequest
                 'max:255',
                 Rule::unique('clients', 'email')->ignore($this->route('id'))
             ],
-            'state' => 'sometimes|string|max:100',
             'city' => 'sometimes|string|max:100',
-            'address' => 'sometimes|string|max:255'
+            'address' => 'sometimes|string|max:255',
+            'admin_id' => 'sometimes|exists:admins,id'
         ];
     }
 
@@ -41,7 +40,8 @@ class UpdateClientRequest extends BaseFormRequest
         return [
             'phone.unique' => 'This phone number is already registered',
             'email.email' => 'Please provide a valid email address',
-            'email.unique' => 'This email address is already registered'
+            'email.unique' => 'This email address is already registered',
+            'admin_id.exists' => 'Selected admin does not exist'
         ];
     }
 
@@ -50,31 +50,31 @@ class UpdateClientRequest extends BaseFormRequest
         $client = Client::findOrFail($this->route('id'));
 
         $updates = [];
-        
+
         if ($this->has('full_name')) {
             $updates['full_name'] = trim($this->full_name);
         }
-        
+
         if ($this->has('phone')) {
             $updates['phone'] = trim($this->phone);
         }
-        
+
         if ($this->has('email')) {
             $updates['email'] = strtolower(trim($this->email));
         }
-        
-        if ($this->has('state')) {
-            $updates['state'] = trim($this->state);
-        }
-        
+
         if ($this->has('city')) {
             $updates['city'] = trim($this->city);
         }
-        
+
         if ($this->has('address')) {
             $updates['address'] = trim($this->address);
         }
-        
+
+        if ($this->has('admin_id')) {
+            $updates['admin_id'] = $this->admin_id;
+        }
+
         if (!empty($updates)) {
             $this->merge($updates);
         }

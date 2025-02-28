@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('clients', function (Blueprint $table) {
             $table->id();
-            $table->string('nom_et_prenom');
-            $table->string('telephone');
-            $table->string('email')->unique();
-            $table->string('wilaya');
-            $table->string('commune');
-            $table->string('adresse');
+            $table->string('full_name');
+            $table->string('phone');
+            $table->string('email');
+            $table->string('city');
+            $table->string('address');
+            $table->foreignId('admin_id')->constrained('admins')->onDelete('cascade');
             $table->timestamps();
         });
     }

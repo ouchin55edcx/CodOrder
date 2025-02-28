@@ -4,6 +4,7 @@ namespace App\Http\Requests\Client;
 
 use App\Http\Requests\BaseFormRequest;
 
+
 class StoreClientRequest extends BaseFormRequest
 {
     public function authorize()
@@ -15,11 +16,11 @@ class StoreClientRequest extends BaseFormRequest
     {
         return [
             'full_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:clients,phone',
-            'email' => 'required|email|max:255|unique:clients,email',
-            'state' => 'required|string|max:100',
+            'phone' => 'required|string|max:20',
+            'email' => 'required|email|max:255',
             'city' => 'required|string|max:100',
-            'address' => 'required|string|max:255'
+            'address' => 'required|string|max:255',
+            'admin_id' => 'required|exists:admins,id'
         ];
     }
 
@@ -28,13 +29,14 @@ class StoreClientRequest extends BaseFormRequest
         return [
             'full_name.required' => 'Full name is required',
             'phone.required' => 'Phone number is required',
-            'phone.unique' => 'This phone number is already registered',
+            //'phone.unique' => 'This phone number is already registered',
             'email.required' => 'Email address is required',
             'email.email' => 'Please provide a valid email address',
-            'email.unique' => 'This email address is already registered',
-            'state.required' => 'State is required',
+           // 'email.unique' => 'This email address is already registered',
             'city.required' => 'City is required',
-            'address.required' => 'Address is required'
+            'address.required' => 'Address is required',
+            'admin_id.required' => 'Admin is required',
+            'admin_id.exists' => 'Selected admin does not exist'
         ];
     }
 
@@ -55,12 +57,6 @@ class StoreClientRequest extends BaseFormRequest
         if ($this->has('email')) {
             $this->merge([
                 'email' => strtolower(trim($this->email))
-            ]);
-        }
-
-        if ($this->has('state')) {
-            $this->merge([
-                'state' => trim($this->state)
             ]);
         }
 

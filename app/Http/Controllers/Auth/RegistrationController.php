@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Admin;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -56,6 +57,11 @@ class RegistrationController extends Controller
         // Create the admin
         $admin = Admin::create([
             'user_id' => $user->id,
+        ]);
+
+        // Create the company
+        $company = Company::create([
+            'admin_id' => $admin->id,
             'company_name' => $validatedData['company_name'],
             'city' => $validatedData['city'],
             'shop_name' => $validatedData['shop_name'],
@@ -67,6 +73,7 @@ class RegistrationController extends Controller
             'business_model' => $validatedData['business_model'],
         ]);
 
+        // Assign the 'admin' role
         $adminRole = Role::where('name', 'admin')->first();
 
         if (!$adminRole) {
@@ -83,6 +90,7 @@ class RegistrationController extends Controller
             'message' => 'Registration successful! Please check your email to verify your account.',
             'user' => $user,
             'admin' => $admin,
-        ], 201); // Explicitly set status code to 201
+            'company' => $company,
+        ], 201);
     }
 }

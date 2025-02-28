@@ -25,11 +25,11 @@ class ClientsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnE
             return Client::updateOrCreate(
                 ['email' => $row['email']],
                 [
-                    'nom_et_prenom' => $row['nom_et_prenom'],
-                    'telephone' => $row['telephone'],
-                    'wilaya' => $row['wilaya'],
-                    'commune' => $row['commune'],
-                    'adresse' => $row['adresse'],
+                    'full_name' => $row['full_name'],
+                    'phone' => $row['phone'],
+                    'city' => $row['city'],
+                    'address' => $row['address'],
+                    'admin_id' => $row['admin_id'] ?? auth()->user()->admin->id, // Assuming admin is logged in
                 ]
             );
         } catch (\Exception $e) {
@@ -41,11 +41,11 @@ class ClientsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnE
     {
         return [
             '*.email' => ['required', 'email'],
-            '*.nom_et_prenom' => ['required', 'string'],
-            '*.telephone' => ['required', 'string'],
-            '*.wilaya' => ['required', 'string'],
-            '*.commune' => ['required', 'string'],
-            '*.adresse' => ['required', 'string'],
+            '*.full_name' => ['required', 'string'],
+            '*.phone' => ['required', 'string'],
+            '*.city' => ['required', 'string'],
+            '*.address' => ['required', 'string'],
+            '*.admin_id' => ['sometimes', 'exists:admins,id'],
         ];
     }
 
@@ -54,11 +54,11 @@ class ClientsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnE
         return [
             'email.required' => 'Email is required',
             'email.email' => 'Email format is invalid',
-            'nom_et_prenom.required' => 'Name is required',
-            'telephone.required' => 'Phone number is required',
-            'wilaya.required' => 'Wilaya is required',
-            'commune.required' => 'Commune is required',
-            'adresse.required' => 'Address is required',
+            'full_name.required' => 'Full name is required',
+            'phone.required' => 'Phone number is required',
+            'city.required' => 'City is required',
+            'address.required' => 'Address is required',
+            'admin_id.exists' => 'Selected admin does not exist',
         ];
     }
 }

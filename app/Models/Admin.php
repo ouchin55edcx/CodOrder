@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,25 +12,18 @@ class Admin extends Model
 
     protected $fillable = [
         'user_id',
-        'company_name',
-        'city',
-        'shop_name',
-        'website',
-        'how_you_heard',
-        'ecommerce_progress',
-        'order_management_tool',
-        'organization_size',
-        'business_model',
         'client_count',
         'brand_count',
         'supplier_count'
     ];
 
-    /**
-     * Get the user that owns the admin.
-     */
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function company()
+    {
+        return $this->hasOne(Company::class);
     }
 }

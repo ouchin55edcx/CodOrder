@@ -14,9 +14,9 @@ class Client extends Model
         'full_name',
         'phone',
         'email',
-        'state',
         'city',
         'address',
+        'admin_id'
     ];
 
     public static function findOrFail($id)
@@ -26,5 +26,13 @@ class Client extends Model
             throw new ResourceNotFoundException('Client not found');
         }
         return $client;
+    }
+
+    /**
+     * Get the admin that owns the client.
+     */
+    public function admin()
+    {
+        return $this->belongsTo(Admin::class);
     }
 }

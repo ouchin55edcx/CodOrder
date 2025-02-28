@@ -1,10 +1,10 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-
 use App\Http\Responses\Client\ClientResponse;
 use App\Models\Client;
 use App\Http\Requests\Client\StoreClientRequest;
@@ -26,7 +26,13 @@ class ClientController extends Controller
             'user_id' => Auth::id()
         ]);
 
-        return ClientResponse::collection(Client::paginate(10));
+        // Get the authenticated admin
+        $admin = Auth::user()->admin;
+
+        // Fetch clients where admin_id matches the authenticated admin's ID
+        $clients = Client::where('admin_id', $admin->id)->paginate(10);
+
+        return ClientResponse::collection($clients);
     }
 
     public function store(StoreClientRequest $request)
@@ -89,7 +95,7 @@ class ClientController extends Controller
         }
 
         // Check trial limits
-        if ($admin->client_count >= 10 && $user->isOnTrial()) {
+        if ($admin->client_count >= 3 && $user->isOnTrial()) {
             Log::info('Trial limit reached', [
                 'client_count' => $admin->client_count,
                 'is_on_trial' => $user->isOnTrial()
@@ -100,8 +106,11 @@ class ClientController extends Controller
         }
 
         try {
-            // Create the client
-            $client = Client::create($request->validated());
+            // Create the client with the admin_id
+            $clientData = $request->validated();
+            $clientData['admin_id'] = $admin->id;
+
+            $client = Client::create($clientData);
             Log::info('Client created successfully', ['client_id' => $client->id]);
 
             // Increment the client count for the admin
@@ -124,15 +133,26 @@ class ClientController extends Controller
 
     public function show($id)
     {
-        $client = Client::findOrFail($id);
+        // Get the authenticated admin
+        $admin = Auth::user()->admin;
+
+        // Fetch the client where admin_id matches the authenticated admin's ID
+        $client = Client::where('admin_id', $admin->id)->findOrFail($id);
+
         return new ClientResponse($client);
     }
 
     public function update(UpdateClientRequest $request, $id)
     {
+        // Get the authenticated admin
+        $admin = Auth::user()->admin;
+
+        // Fetch the client where admin_id matches the authenticated admin's ID
+        $client = Client::where('admin_id', $admin->id)->findOrFail($id);
+
         try {
             Log::info('Before policy authorization for update');
-            $this->authorize('update', Client::class);
+            $this->authorize('update', $client); // Authorize the specific client
             Log::info('After policy authorization for update - passed');
         } catch (\Exception $e) {
             Log::error('Policy authorization for update failed:', [
@@ -141,16 +161,23 @@ class ClientController extends Controller
             return response()->json(['message' => 'Authorization error: ' . $e->getMessage()], 403);
         }
 
-        $client = Client::findOrFail($id);
+        // Update the client
         $client->update($request->validated());
+
         return new ClientResponse($client);
     }
 
     public function destroy($id)
     {
+        // Get the authenticated admin
+        $admin = Auth::user()->admin;
+
+        // Fetch the client where admin_id matches the authenticated admin's ID
+        $client = Client::where('admin_id', $admin->id)->findOrFail($id);
+
         try {
             Log::info('Before policy authorization for delete');
-            $this->authorize('delete', Client::class);
+            $this->authorize('delete', $client); // Authorize the specific client
             Log::info('After policy authorization for delete - passed');
         } catch (\Exception $e) {
             Log::error('Policy authorization for delete failed:', [
@@ -159,17 +186,18 @@ class ClientController extends Controller
             return response()->json(['message' => 'Authorization error: ' . $e->getMessage()], 403);
         }
 
-        $client = Client::findOrFail($id);
+        // Delete the client
         $client->delete();
 
-        // Decrement count
-        Auth::user()->admin->decrement('client_count');
+        // Decrement the client count for the admin
+        $admin->decrement('client_count');
 
         return response()->json(null, 204);
     }
 
     public function import(Request $request)
     {
+        // Get the authenticated admin
         $admin = Auth::user()->admin;
 
         // Check trial limits
@@ -184,7 +212,7 @@ class ClientController extends Controller
         ]);
 
         try {
-            $import = new ClientsImport();
+            $import = new ClientsImport($admin->id); // Pass admin_id to the import class
             Excel::import($import, $request->file('file'));
 
             // Update client count

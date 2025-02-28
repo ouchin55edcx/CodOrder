@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CompanyController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ClientController;
@@ -45,6 +46,13 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
         Route::get('/{id}', [BrandController::class, 'show'])->middleware('can:manage-brands');
         Route::put('/{id}', [BrandController::class, 'update'])->middleware('can:manage-brands');
         Route::delete('/{id}', [BrandController::class, 'destroy'])->middleware('can:manage-brands');
+    });
+
+
+    // Company routes (protected by auth middleware)
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/company', [CompanyController::class, 'show']);
+        Route::put('/company', [CompanyController::class, 'update']);
     });
 
     // Logout

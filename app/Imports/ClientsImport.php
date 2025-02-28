@@ -13,12 +13,17 @@ use Illuminate\Validation\Rule;
 class ClientsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnError
 {
     use SkipsErrors;
+    private $rows = 0;
 
+    public function getRowCount()
+    {
+        return $this->rows;
+    }
     public function model(array $row)
     {
         try {
             return Client::updateOrCreate(
-                ['email' => $row['email']], // The unique identifier
+                ['email' => $row['email']],
                 [
                     'nom_et_prenom' => $row['nom_et_prenom'],
                     'telephone' => $row['telephone'],

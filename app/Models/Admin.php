@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Admin extends User
+class Admin extends Model
 {
-    protected $table = 'admins'; 
+    use HasFactory;
+
+    protected $table = 'admins';
 
     protected $fillable = [
         'user_id',
@@ -24,6 +27,9 @@ class Admin extends User
         'supplier_count'
     ];
 
+    /**
+     * Get the user that owns the admin.
+     */
     public function user()
     {
         return $this->belongsTo(User::class);

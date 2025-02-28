@@ -2,9 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Exceptions\ResourceNotFoundException;
+use Illuminate\Database\Eloquent\Model;
 
 class Client extends Model
 {
@@ -16,23 +15,14 @@ class Client extends Model
         'email',
         'city',
         'address',
-        'admin_id'
     ];
 
-    public static function findOrFail($id)
+    /**
+     * Get the companies that the client belongs to.
+     */
+    public function companies()
     {
-        $client = self::find($id);
-        if (!$client) {
-            throw new ResourceNotFoundException('Client not found');
-        }
-        return $client;
+        return $this->belongsToMany(Company::class, 'client_company');
     }
 
-    /**
-     * Get the admin that owns the client.
-     */
-    public function admin()
-    {
-        return $this->belongsTo(Admin::class);
-    }
 }

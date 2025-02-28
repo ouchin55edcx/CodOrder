@@ -19,11 +19,14 @@ class Company extends Model
         'ecommerce_progress',
         'order_management_tool',
         'organization_size',
-        'business_model'
+        'business_model',
     ];
 
-    public function admin()
+    /**
+     * Get the clients that belong to the company.
+     */
+    public function clients()
     {
-        return $this->belongsTo(Admin::class);
+        return $this->belongsToMany(Client::class, 'client_company');
     }
 }

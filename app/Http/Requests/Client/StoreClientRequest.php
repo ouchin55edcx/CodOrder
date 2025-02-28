@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests\Client;
 
-use App\Http\Requests\BaseFormRequest;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
-
-class StoreClientRequest extends BaseFormRequest
+class StoreClientRequest extends FormRequest
 {
     public function authorize()
     {
@@ -16,60 +16,52 @@ class StoreClientRequest extends BaseFormRequest
     {
         return [
             'full_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'email' => 'required|email|max:255',
+            'phone' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('clients')->where(function ($query) {
+                    // Check if the client is linked to the specified company
+                    return $query->whereExists(function ($subQuery) {
+                        $subQuery->from('client_company')
+                            ->whereColumn('client_company.client_id', 'clients.id')
+                            ->where('client_company.company_id', $this->company_id);
+                    });
+                })
+            ],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('clients')->where(function ($query) {
+                    // Check if the client is linked to the specified company
+                    return $query->whereExists(function ($subQuery) {
+                        $subQuery->from('client_company')
+                            ->whereColumn('client_company.client_id', 'clients.id')
+                            ->where('client_company.company_id', $this->company_id);
+                    });
+                })
+            ],
             'city' => 'required|string|max:100',
             'address' => 'required|string|max:255',
-            'admin_id' => 'required|exists:admins,id'
+            'company_id' => 'required|exists:companies,id'
         ];
     }
+
 
     public function messages()
     {
         return [
             'full_name.required' => 'Full name is required',
             'phone.required' => 'Phone number is required',
-            //'phone.unique' => 'This phone number is already registered',
+            'phone.unique' => 'This phone number is already registered in this company',
             'email.required' => 'Email address is required',
             'email.email' => 'Please provide a valid email address',
-           // 'email.unique' => 'This email address is already registered',
+            'email.unique' => 'This email address is already registered in this company',
             'city.required' => 'City is required',
             'address.required' => 'Address is required',
-            'admin_id.required' => 'Admin is required',
-            'admin_id.exists' => 'Selected admin does not exist'
+            'company_id.required' => 'Company is required',
+            'company_id.exists' => 'Selected company does not exist'
         ];
-    }
-
-    protected function prepareForValidation()
-    {
-        if ($this->has('full_name')) {
-            $this->merge([
-                'full_name' => trim($this->full_name)
-            ]);
-        }
-
-        if ($this->has('phone')) {
-            $this->merge([
-                'phone' => trim($this->phone)
-            ]);
-        }
-
-        if ($this->has('email')) {
-            $this->merge([
-                'email' => strtolower(trim($this->email))
-            ]);
-        }
-
-        if ($this->has('city')) {
-            $this->merge([
-                'city' => trim($this->city)
-            ]);
-        }
-
-        if ($this->has('address')) {
-            $this->merge([
-                'address' => trim($this->address)
-            ]);
-        }
     }
 }

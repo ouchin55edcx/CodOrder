@@ -12,7 +12,7 @@ use App\Http\Requests\Client\UpdateClientRequest;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ClientsImport;
-use App\Models\Admin;
+use App\Models\Company;
 
 class ClientController extends Controller
 {
@@ -26,129 +26,65 @@ class ClientController extends Controller
             'user_id' => Auth::id()
         ]);
 
-        // Get the authenticated admin
-        $admin = Auth::user()->admin;
+        // Get the authenticated admin's company
+        $company = Auth::user()->admin->company;
 
-        // Fetch clients where admin_id matches the authenticated admin's ID
-        $clients = Client::where('admin_id', $admin->id)->paginate(10);
+        // Fetch clients belonging to the company
+        $clients = $company->clients()->paginate(10);
 
         return ClientResponse::collection($clients);
+
     }
 
     public function store(StoreClientRequest $request)
     {
-        // Debug authentication
-        Log::info('Store method accessed', [
-            'is_authenticated' => Auth::check(),
-            'method' => 'store',
-            'controller' => 'ClientController'
-        ]);
+        // Get the authenticated admin's company
+        $company = Auth::user()->admin->company;
 
-        // Check if the user is authenticated
-        if (!Auth::check()) {
-            Log::error('No authenticated user');
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
+        // Check if the client already exists in the company
+        $client = Client::where('email', $request->email)
+            ->orWhere('phone', $request->phone)
+            ->first();
 
-        // Log the authenticated user's details for debugging
-        $user = Auth::user();
-        Log::info('User details:', [
-            'id' => $user->id,
-            'email' => $user->email,
-            'has_admin_role' => $user->hasRole('admin'),
-            'roles' => $user->getRoleNames()->toArray()
-        ]);
-
-        // Ensure the user has the 'admin' role
-        if (!$user->hasRole('admin')) {
-            Log::error('User does not have admin role', [
-                'user_id' => $user->id,
-                'roles' => $user->getRoleNames()->toArray()
-            ]);
-            return response()->json(['message' => 'You do not have permission to perform this action.'], 403);
-        }
-
-        // Get the admin profile for the authenticated user
-        $admin = $user->admin;
-        Log::info('Admin relationship check', [
-            'has_admin' => $admin !== null,
-            'admin_id' => $admin ? $admin->id : null
-        ]);
-
-        // Ensure the admin profile exists
-        if (!$admin) {
-            Log::error('Admin profile not found', ['user_id' => $user->id]);
-            return response()->json(['message' => 'Admin profile not found.'], 404);
-        }
-
-        try {
-            // Debug authorization
-            Log::info('Before policy authorization');
-            $this->authorize('create', Client::class);
-            Log::info('After policy authorization - passed');
-        } catch (\Exception $e) {
-            Log::error('Policy authorization failed:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return response()->json(['message' => 'Authorization error: ' . $e->getMessage()], 403);
-        }
-
-        // Check trial limits
-        if ($admin->client_count >= 3 && $user->isOnTrial()) {
-            Log::info('Trial limit reached', [
-                'client_count' => $admin->client_count,
-                'is_on_trial' => $user->isOnTrial()
-            ]);
+        if ($client && $client->companies()->where('company_id', $company->id)->exists()) {
             return response()->json([
-                'message' => 'Trial limit reached. You can only create 10 clients during the trial period.'
-            ], 403);
+                'message' => 'Client already exists in this company.'
+            ], 409); // Conflict status code
         }
 
-        try {
-            // Create the client with the admin_id
-            $clientData = $request->validated();
-            $clientData['admin_id'] = $admin->id;
+        // Create the client
+        $client = Client::create($request->only([
+            'full_name',
+            'phone',
+            'email',
+            'city',
+            'address',
+        ]));
 
-            $client = Client::create($clientData);
-            Log::info('Client created successfully', ['client_id' => $client->id]);
+        // Attach the client to the company
+        $client->companies()->attach($company->id);
 
-            // Increment the client count for the admin
-            $admin->increment('client_count');
-            Log::info('Admin client count incremented', [
-                'admin_id' => $admin->id,
-                'new_client_count' => $admin->client_count
-            ]);
-
-            // Return the client response
-            return new ClientResponse($client);
-        } catch (\Exception $e) {
-            Log::error('Error creating client', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return response()->json(['message' => 'Error creating client: ' . $e->getMessage()], 500);
-        }
+        return new ClientResponse($client);
     }
 
     public function show($id)
     {
-        // Get the authenticated admin
-        $admin = Auth::user()->admin;
+        // Get the authenticated admin's company
+        $company = Auth::user()->admin->company;
 
-        // Fetch the client where admin_id matches the authenticated admin's ID
-        $client = Client::where('admin_id', $admin->id)->findOrFail($id);
+        // Fetch the client belonging to the company
+        $client = Client::where('company_id', $company->id)->findOrFail($id);
 
         return new ClientResponse($client);
     }
 
     public function update(UpdateClientRequest $request, $id)
     {
-        // Get the authenticated admin
-        $admin = Auth::user()->admin;
+        // Get the authenticated admin's company
+        $company = Auth::user()->admin->company;
 
-        // Fetch the client where admin_id matches the authenticated admin's ID
-        $client = Client::where('admin_id', $admin->id)->findOrFail($id);
+        // Fetch the client belonging to the company
+        $client = Client::where('company_id', $company->id)->findOrFail($id);
 
         try {
             Log::info('Before policy authorization for update');
@@ -169,11 +105,11 @@ class ClientController extends Controller
 
     public function destroy($id)
     {
-        // Get the authenticated admin
-        $admin = Auth::user()->admin;
+        // Get the authenticated admin's company
+        $company = Auth::user()->admin->company;
 
-        // Fetch the client where admin_id matches the authenticated admin's ID
-        $client = Client::where('admin_id', $admin->id)->findOrFail($id);
+        // Fetch the client belonging to the company
+        $client = Client::where('company_id', $company->id)->findOrFail($id);
 
         try {
             Log::info('Before policy authorization for delete');
@@ -189,21 +125,18 @@ class ClientController extends Controller
         // Delete the client
         $client->delete();
 
-        // Decrement the client count for the admin
-        $admin->decrement('client_count');
-
         return response()->json(null, 204);
     }
 
     public function import(Request $request)
     {
-        // Get the authenticated admin
-        $admin = Auth::user()->admin;
+        // Get the authenticated admin's company
+        $company = Auth::user()->admin->company;
 
         // Check trial limits
-        if ($admin->client_count >= 10 && $admin->user->isOnTrial()) {
+        if ($company->clients()->count() >= 10 && $company->admin->user->isOnTrial()) {
             return response()->json([
-                'message' => 'Trial limit reached. You can only create 10 clients during trial period.'
+                'message' => 'Trial limit reached. You can only create 10 clients during the trial period.'
             ], 403);
         }
 
@@ -212,11 +145,9 @@ class ClientController extends Controller
         ]);
 
         try {
-            $import = new ClientsImport($admin->id); // Pass admin_id to the import class
+            // Pass the company_id to the import class
+            $import = new ClientsImport($company->id);
             Excel::import($import, $request->file('file'));
-
-            // Update client count
-            $admin->increment('client_count', $import->getRowCount());
 
             return response()->json([
                 'message' => 'Import completed successfully',

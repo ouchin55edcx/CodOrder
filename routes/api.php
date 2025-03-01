@@ -1,7 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\SupplierController;
@@ -21,29 +22,26 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
         return $request->user()->load('admin');
     });
 
-    // Protected routes (require authentication)
-    Route::middleware('auth:sanctum')->group(function () {
-        // Client routes
-        Route::prefix('clients')->group(function () {
-            Route::post('/', [ClientController::class, 'store']);
-            Route::get('/', [ClientController::class, 'index']);
-            Route::get('/{id}', [ClientController::class, 'show']);
-            Route::put('/{id}', [ClientController::class, 'update']);
-            Route::delete('/{id}', [ClientController::class, 'destroy']);
-            Route::post('/import', [ClientController::class, 'import']);
-        });
+    // Client routes
+    Route::prefix('clients')->group(function () {
+        Route::get('/', [ClientController::class, 'index']);
+        Route::post('/', [ClientController::class, 'store']);
+        Route::get('/{id}', [ClientController::class, 'show']);
+        Route::put('/{id}', [ClientController::class, 'update']);
+        Route::delete('/{id}', [ClientController::class, 'destroy']);
+        Route::post('/import', [ClientController::class, 'import']);
+    });
 
-        // Logout route
-        Route::post('/logout', function () {
-            Auth::user()->tokens()->delete();
-            return response()->json(['message' => 'Logged out successfully']);
-        });
+    // Logout route
+    Route::post('/logout', function () {
+        Auth::user()->tokens()->delete();
+        return response()->json(['message' => 'Logged out successfully']);
     });
 
     // Suppliers
     Route::prefix('suppliers')->group(function () {
-        Route::post('', [SupplierController::class, 'store'])->middleware('can:manage-suppliers');
-        Route::get('', [SupplierController::class, 'index'])->middleware('can:manage-suppliers');
+        Route::post('/', [SupplierController::class, 'store'])->middleware('can:manage-suppliers');
+        Route::get('/', [SupplierController::class, 'index'])->middleware('can:manage-suppliers');
         Route::get('/{id}', [SupplierController::class, 'show'])->middleware('can:manage-suppliers');
         Route::put('/{id}', [SupplierController::class, 'update'])->middleware('can:manage-suppliers');
         Route::delete('/{id}', [SupplierController::class, 'destroy'])->middleware('can:manage-suppliers');
@@ -51,16 +49,14 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
     // Brands
     Route::prefix('brands')->group(function () {
-        Route::post('', [BrandController::class, 'store'])->middleware('can:manage-brands');
-        Route::get('', [BrandController::class, 'index'])->middleware('can:manage-brands');
+        Route::post('/', [BrandController::class, 'store'])->middleware('can:manage-brands');
+        Route::get('/', [BrandController::class, 'index'])->middleware('can:manage-brands');
         Route::get('/{id}', [BrandController::class, 'show'])->middleware('can:manage-brands');
         Route::put('/{id}', [BrandController::class, 'update'])->middleware('can:manage-brands');
         Route::delete('/{id}', [BrandController::class, 'destroy'])->middleware('can:manage-brands');
     });
 
-    // Company routes (protected by auth middleware)
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/company', [CompanyController::class, 'show']);
-        Route::put('/company', [CompanyController::class, 'update']);
-    });
+    // Company routes
+    Route::get('/company', [CompanyController::class, 'show']);
+    Route::put('/company', [CompanyController::class, 'update']);
 });

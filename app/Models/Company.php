@@ -25,8 +25,5 @@ class Company extends Model
     /**
      * Get the clients that belong to the company.
      */
-    public function clients()
-    {
-        return $this->belongsToMany(Client::class, 'client_company');
-    }
+
 }

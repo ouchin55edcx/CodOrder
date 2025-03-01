@@ -13,16 +13,10 @@ return new class extends Migration
     {
         Schema::create('admins', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Foreign key to users table
-            $table->string('company_name')->nullable();
-            $table->string('city')->nullable();
-            $table->string('shop_name')->nullable();
-            $table->string('website')->nullable();
-            $table->text('how_you_heard')->nullable();
-            $table->text('ecommerce_progress')->nullable();
-            $table->text('order_management_tool')->nullable();
-            $table->string('organization_size')->nullable();
-            $table->string('business_model')->nullable();
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->integer('client_count')->default(0);
+            $table->integer('brand_count')->default(0);
+            $table->integer('supplier_count')->default(0);
             $table->timestamps();
         });
     }
